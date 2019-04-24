@@ -152,10 +152,15 @@ char* SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
             sprintf(hstr, "0x%16.16"PRIx64" %"PRId64, *i64, *i64);
             break;
          case ECT_UNSIGNED8:
+         case 0x0804: // 6010 03
+         case 0x0800: // 7010 03
+         case 0x0801: // 8010 39
+         case 0x0803: // 8010 3A
             u8 = (uint8*) &usdo[0];
             sprintf(hstr, "0x%2.2x %u", *u8, *u8);
             break;
          case ECT_UNSIGNED16:
+         case 0x0806: // 8010 52
             u16 = (uint16*) &usdo[0];
             sprintf(hstr, "0x%4.4x %u", *u16, *u16);
             break;
@@ -514,9 +519,14 @@ void slaveinfo(char *ifname)
    {
       printf("ec_init on %s succeeded.\n",ifname);
       /* find and auto-config slaves */
-      if ( ec_config(FALSE, &IOmap) > 0 )
+      if ( ec_config_init(FALSE) > 0 )
       {
+         ec_dcsync0(2, TRUE, 2000000U, 1000U);
+         ec_dcsync01(2, TRUE, 2000000U, 4000000U, 1000U);
          ec_configdc();
+
+         ec_config_map(&IOmap);
+
          while(EcatError) printf("%s", ec_elist2string());
          printf("%d slaves found and configured.\n",ec_slavecount);
          expectedWKC = (ec_group[0].outputsWKC * 2) + ec_group[0].inputsWKC;
